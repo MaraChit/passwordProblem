@@ -1,0 +1,372 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Apr  8 12:04:09 2020
+
+@author: Mara
+"""
+from numpy import random
+
+def charactersContained(s):
+    '''
+    s:the password
+    This functon returns the number of lowercase letters, the number of uppercase letters
+                and the number of digits contained in the given password.
+    '''
+    noDigits=0
+    noLower=0
+    noUpper=0  
+    for i in s:
+        if i.isdigit():
+            noDigits=noDigits+1
+        elif i.isupper():
+            noUpper=noUpper+1
+        else:
+            noLower=noLower+1
+            
+    return(noLower,noUpper,noDigits)
+    
+def splitPassword(s,start,end):
+    '''
+    s: the password
+    start: starting index
+    end: ending index
+    The function creates a new password from the original one, using the letters that are in range
+                of the start and end indexes. 
+    '''
+    password=''
+    for i in range (start,end):
+        password=password+s[i]
+        
+    return password
+
+def giveRandomUpper():
+    '''
+    retruns a random uppercase letter
+    '''
+    upper='ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    return upper[random.randint(0,len(upper))]
+    
+def giveRandomLower():
+    '''
+    returns a random lowercase letter
+    '''
+    lower='abcdefghijklmnopqrstuvwxyz'
+    return lower[random.randint(0,len(lower))]
+
+def giveRandomDigit():
+    '''
+    returns a random digit as a character
+    '''
+    digit='0123456789'
+    return digit[random.randint(0,len(digit))]
+
+
+
+
+''' Functions for short password'''
+
+def addInSequence(s):
+    '''
+    s: the password
+    This function adds a new character in a sequence of three identical elements, before the 3rd one
+    '''
+    x=charactersContained(s)
+    noLower=x[0]
+    noUpper=x[1] 
+    noDigits=x[2]
+    
+    changes=0
+    password=s
+    
+    for i in range (2,len(s)):
+        if password[i-1]==s[i] and password[i-2]==s[i]:
+            #adding a lowercase letter in a sequence
+            if s[i].isdigit() and noUpper>noLower or s[i].isupper() and noDigits>noLower:
+                password=splitPassword(password,0,i)
+                password=password+giveRandomLower()
+                password=password+splitPassword(s,i,len(s))
+                noLower=noLower+1
+                
+            #adding an uppercase letter in a sequence
+            elif s[i].isdigit() and noLower>=noUpper or s[i].islower() and noDigits>noUpper:
+                password=splitPassword(password,0,i)
+                password=password+giveRandomUpper()
+                password=password+splitPassword(s,i,len(s))
+                noUpper=noUpper+1
+                
+            #adding a digit in a sequence
+            else:
+                password=splitPassword(password,0,i)
+                password=password+giveRandomDigit()
+                password=password+splitPassword(s,i,len(s))
+                noDigits=noDigits+1
+                
+            changes=changes+1
+            
+    return(password,changes)
+            
+def addCharacters(password):
+    '''
+    password: the password
+    Function that adds characters to reach the proper length, or to assure that the password
+            contains uppercase and lowercase letters and digits
+    '''
+    x=charactersContained(password)
+    noLower=x[0]
+    noUpper=x[1] 
+    noDigits=x[2]
+    
+    changes=0
+    #if there are no digits, one digit will be added
+    if noDigits==0:
+        password=password+giveRandomDigit()
+        changes=changes+1 
+ 
+    #if there are no uppercase letter, one will be added
+    if noUpper==0:
+        password=password+giveRandomUpper()
+        changes=changes+1  
+        
+    #if there are no lowercase letters, one will be added
+    if noLower==0:
+        password=password+giveRandomLower()
+        changes=changes+1   
+        
+    #if the short password contains uppercase and lowercase letters and digits,then random 
+    #digits will be added to reach the proper length
+    while len(password)<6:
+        password=password+giveRandomDigit()
+        changes=changes+1
+        
+    return(password,changes)
+    
+        
+def shortPassword(s):
+    '''
+    s:the password
+    Function that adds more characters to the password, in order to have the required length
+    '''
+    changes=0
+    
+    #check and modify sequences of 3 identical characters
+    x=addInSequence(s)
+    password=x[0]
+    changes2=x[1]
+    changes=changes+changes2
+    
+    while changes2!=0:
+        x=addInSequence(password)
+        password=x[0]
+        changes2=x[1]
+        changes=changes+changes2
+    
+    #add the missing characters
+    x=addCharacters(password)
+    password=x[0]
+    changes=changes+x[1]
+    
+    return(password, changes)
+    
+    
+  
+
+'''Functions for normal length password'''
+
+def modifySequence(s):
+    '''
+    s:the password
+    The function checks for sequences of 3 identical characters in a row. If found,
+            the 3rd one will be replaced.
+    '''
+    changes=0    
+    password=s
+    x=charactersContained(s)
+    noUpper=x[1] 
+    noDigits=x[2]
+    
+    for i in range (2,len(s)):
+
+        if s[i]==password[i-1] and s[i]==password[i-2]:
+            
+            changes=changes+1
+            password=splitPassword(password,0,i)
+            password2=splitPassword(s,i+1,len(s))
+            
+            #if it's a digit the one that appeares 3 times in a row:
+            if s[i].isdigit():
+                if noUpper==0:
+                    password=password+giveRandomUpper()
+                    password=password+password2
+                    noUpper=noUpper+1
+                else:
+                    password=password+giveRandomLower()
+                    password=password+password2
+                
+            #if it's a lowercase letter that appeares 3 times in a row:
+            elif s[i].islower():
+                if noDigits==0:
+                    password=password+giveRandomDigit()
+                    password=password+password2
+                    noDigits=noDigits+1
+                else:
+                    password=password+s[i].upper()
+                    password=password+password2
+                
+            #if it's an uppercase letter that appeares 3 times in a row:
+            else:
+                if noDigits==0:
+                    password=password+giveRandomDigit()
+                    password=password+password2
+                    noDigits=noDigits+1
+                else:
+                    password=password+s[i].lower()
+                    password=password+password2
+    
+    return (password,changes)
+    
+
+def checkContains(s):
+    '''
+    s: password
+    This function verifies if the password contains digits and uppercase and lowercase letters;
+    if it doesn't, it makes replacements in order to contain all that is needed
+    '''
+    x=charactersContained(s)
+    noLower=x[0]
+    noUpper=x[1] 
+    noDigits=x[2]
+    changes=0
+    
+    if noLower!=0 and noUpper!=0 and noDigits!=0:
+        return (s, changes)
+    
+    #if it only contains digits, the last 2 digits are replaced with a lowercase and an uppercase letter
+    elif noLower==0 and noUpper==0:
+        password=splitPassword(s,0,len(s)-2)
+        password=password+giveRandomLower()
+        password=password+giveRandomUpper()
+        changes=changes+2
+    #if it only contains uppercase letters, the last 2 are replaced with a lowercase letter and a digit
+    elif noLower==0 and noDigits==0:
+        password=splitPassword(s,0,len(s)-2)
+        password=password+giveRandomLower()
+        password=password+giveRandomDigit()
+        changes=changes+2
+    #if it only contains lowercase letters, the last 2 are replaced with an uppercase letter and a digit    
+    elif noUpper==0 and noDigits==0:
+        password=splitPassword(s,0,len(s)-2)
+        password=password+giveRandomUpper()
+        password=password+giveRandomDigit()
+        changes=changes+2
+        
+    #if it contains uppercase and lowercase letters,one of them will be replaced with a digit
+    elif noDigits==0:
+        i=0
+        ok=0
+        while ok==0 and i<len(s):
+            if s[i].isupper() and noUpper>noLower or s[i].islower() and noUpper<=noLower:
+                ok=1
+                password=splitPassword(s,0,i-1)
+                password2=splitPassword(s,i+1,len(s))
+                password=password+giveRandomDigit()
+                password=password+password2
+            else:
+                i=i+1
+        changes=changes+1
+        
+    #if it contains uppercase letters and digits, one of them will be replaced with a lowercase letter
+    elif noLower==0:
+        i=0
+        ok=0
+        while ok==0 and i<len(s):
+            if s[i].isupper() and noUpper>noDigits or s[i].isdigit() and noUpper<=noDigits:
+                ok=1
+                password=splitPassword(s,0,i-1)
+                password2=splitPassword(s,i+1,len(s))
+                password=password+giveRandomLower()
+                password=password+password2
+            else:
+                i=i+1
+        changes=changes+1
+        
+    #if it contains lowercase letters and digits, one of them will be replaced with an uppercase letter
+    else:
+        i=0
+        ok=0
+        while ok==0 and i<len(s):
+            if s[i].islower() and noLower>noDigits or s[i].isdigit() and noLower<=noDigits:
+                ok=1
+                password=splitPassword(s,0,i-1)
+                password2=splitPassword(s,i+1,len(s))
+                password=password+giveRandomUpper()
+                password=password+password2
+            else:
+                i=i+1
+        changes=changes+1
+        
+    return(password,changes)
+    
+def normalPassword(s):
+    '''
+    s: the password
+    This function finds the minimum number of changes that need to be made to have a strong password
+    '''
+    
+    #all sequences containing 3 identic characters are modified
+    x=modifySequence(s)
+    s=x[0]
+    changes=x[1]
+    
+    #check to have uppercase and lowercase letters and digits
+    x=checkContains(s)
+    s=x[0]
+    changes=changes+x[1]
+    
+    return(s,changes)
+    
+  
+    
+    
+'''Functions for long password'''  
+
+def longPassword(s):
+    '''
+    s:the password
+    This function chooses the part of the given password that
+    '''
+    erasedChars=len(s)-20
+    minChanges=21 + erasedChars
+    bestPassword=''
+    
+    for i in range(0,len(s)-20):
+        password=''
+
+        for j in range(i,i+20):
+            password=password+s[j]
+            
+        x=normalPassword(password)
+        changes=x[1]+ erasedChars
+        
+        if changes < minChanges:
+            minChanges=changes
+            bestPassword=x[0]
+
+    return (bestPassword, minChanges)
+    
+    
+def main():
+    
+    s=input()
+    if len(s)<6:
+        x=shortPassword(s)
+    elif len(s)>20:
+        x=longPassword(s)
+    else:
+       x=normalPassword(s)
+       
+    password=x[0]
+    changes=x[1]
+    
+    print(password)
+    print(changes)
+main()
